@@ -1,0 +1,9 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "serviceBusNamespace": "sb-your-namespace.servicebus.windows.net",
+    "APPLICATIONINSIGHTS_CONNECTION_STRING": ""
+  }
+}

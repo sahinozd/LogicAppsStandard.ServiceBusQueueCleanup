@@ -1,0 +1,11 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "APP_KIND": "workflowapp",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "isMockEnabled": "false",
+    "sharedFunctionAppBaseUrl": "https://<your-function-app>.azurewebsites.net/",
+    "functionAppResourceAudience": "api://<client-id-of-the-function-app-registration>"
+  }
+}

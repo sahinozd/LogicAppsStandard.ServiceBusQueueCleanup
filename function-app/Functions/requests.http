@@ -1,0 +1,12 @@
+### Call the function directly while it runs locally (func start / F5 in Visual Studio, port 7227).
+### The function returns 202 right away and posts {"statusCode":..., "message":...} to CallbackUrl when it's done.
+### Point CallbackUrl at anything that accepts a POST, for example a request bin or a local listener.
+### Set MockingEnabled to true to test the 202 + callback flow without touching Service Bus.
+
+POST http://localhost:7227/general/v1/hip/clean-servicebus-queues
+Content-Type: application/json
+CorrelationId: local-test-1
+MockingEnabled: false
+CallbackUrl: http://127.0.0.1:7330/callback
+
+< ../../sample-messages/clean-deferred-and-session-messages.json

@@ -1,0 +1,176 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Try": {
+                "type": "Scope",
+                "actions": {
+                    "Call_function_cleanservicebusqueuebyqueuename_with_webhook": {
+                        "type": "HttpWebhook",
+                        "inputs": {
+                            "subscribe": {
+                                "method": "POST",
+                                "uri": "@{parameters('SharedFunctionAppBaseUrl')}general/v1/hip/clean-servicebus-queues",
+                                "body": "@triggerBody()",
+                                "authentication": {
+                                    "type": "ManagedServiceIdentity",
+                                    "audience": "@{parameters('FunctionAppResourceAudience')}"
+                                },
+                                "headers": {
+                                    "CallbackUrl": "@{listCallbackUrl()}",
+                                    "MockingEnabled": "@{parameters('IsMockEnabled')}",
+                                    "CorrelationId": "@{variables('correlationId')}"
+                                }
+                            }
+                        },
+                        "limit": {
+                            "timeout": "PT1H"
+                        }
+                    },
+                    "Check_webhook_response": {
+                        "type": "Switch",
+                        "description": "If the webhook action does not complete in time, it will throw an ActionTimedOut, We then throw an exception.",
+                        "expression": "@coalesce(actions('Call_function_cleanservicebusqueuebyqueuename_with_webhook')?['Code'], '')",
+                        "default": {
+                            "actions": {
+                                "Check_response_status_code_from_async_function_call": {
+                                    "type": "If",
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "not": {
+                                                    "equals": [
+                                                        "@int(body('Call_function_cleanservicebusqueuebyqueuename_with_webhook')?['statusCode'])",
+                                                        200
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    "actions": {
+                                        "Throw_exception_for_http_status_code_errors": {
+                                            "type": "Compose",
+                                            "inputs": "@int('__ERROR__')"
+                                        }
+                                    },
+                                    "else": {
+                                        "actions": {}
+                                    }
+                                }
+                            }
+                        },
+                        "cases": {
+                            "Action_timed_out": {
+                                "actions": {
+                                    "Throw_exception_on_timeout": {
+                                        "type": "Compose",
+                                        "inputs": "@int('__ERROR__')"
+                                    }
+                                },
+                                "case": "ActionTimedOut"
+                            }
+                        },
+                        "runAfter": {
+                            "Call_function_cleanservicebusqueuebyqueuename_with_webhook": [
+                                "SUCCEEDED",
+                                "TIMEDOUT"
+                            ]
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Initialize_variables": [
+                        "SUCCEEDED"
+                    ]
+                }
+            },
+            "Catch": {
+                "type": "Scope",
+                "actions": {
+                    "Terminate": {
+                        "type": "Terminate",
+                        "inputs": {
+                            "runStatus": "Failed",
+                            "runError": {
+                                "message": "Could not clean up the queues."
+                            }
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Try": [
+                        "FAILED",
+                        "TIMEDOUT"
+                    ]
+                }
+            },
+            "Initialize_variables": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "correlationId",
+                            "type": "string",
+                            "value": "@{guid()}"
+                        }
+                    ]
+                },
+                "runAfter": {}
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {},
+        "triggers": {
+            "When_a_HTTP_request_is_received": {
+                "type": "Request",
+                "kind": "Http",
+                "inputs": {
+                    "method": "POST",
+                    "schema": {
+                        "$schema": "http://json-schema.org/draft-04/schema#",
+                        "type": "object",
+                        "properties": {
+                            "BatchSize": {
+                                "type": "integer"
+                            },
+                            "HandleSessionAndDeferredMessages": {
+                                "type": "boolean"
+                            },
+                            "DeadletterActiveQueueMessages": {
+                                "type": "boolean"
+                            },
+                            "ClearDeadletterQueueMessages": {
+                                "type": "boolean"
+                            },
+                            "Data": {
+                                "type": "array",
+                                "items": [
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "Name": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "Name"
+                                        ]
+                                    }
+                                ]
+                            }
+                        },
+                        "required": [
+                            "BatchSize",
+                            "HandleSessionAndDeferredMessages",
+                            "DeadletterActiveQueueMessages",
+                            "ClearDeadletterQueueMessages",
+                            "Data"
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "kind": "Stateful"
+}

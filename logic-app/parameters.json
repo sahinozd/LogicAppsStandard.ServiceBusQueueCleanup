@@ -1,0 +1,14 @@
+{
+  "IsMockEnabled": {
+    "type": "String",
+    "value": "@appsetting('isMockEnabled')"
+  },
+  "SharedFunctionAppBaseUrl": {
+    "type": "String",
+    "value": "@appsetting('sharedFunctionAppBaseUrl')"
+  },
+  "FunctionAppResourceAudience": {
+    "type": "String",
+    "value": "@appsetting('functionAppResourceAudience')"
+  }
+}

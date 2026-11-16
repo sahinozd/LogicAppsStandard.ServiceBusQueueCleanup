@@ -1,0 +1,9 @@
+{
+  "BatchSize": 1000,
+  "HandleSessionAndDeferredMessages": false,
+  "DeadletterActiveQueueMessages": false,
+  "ClearDeadletterQueueMessages": true,
+  "Data": [
+    { "Name": "sbq-targetsystem-datatype-sourcesystem-prc" }
+  ]
+}
